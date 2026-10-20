@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#121316">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Můj fitness plán</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#1a1c20;--mu:#6b7078;--ac:#e8590c;--ln:#e2e4e8;--ac2:#fff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121316;--card:#1d1f24;--tx:#f0f1f3;--mu:#9a9fa8;--ac:#ff7a33;--ln:#2e3138;--ac2:#121316;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121316;--card:#1d1f24;--tx:#f0f1f3;--mu:#9a9fa8;--ac:#ff7a33;--ln:#2e3138;--ac2:#121316;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;max-width:640px;margin:0 auto;padding:12px 12px 80px}
+h1{font-size:22px;margin:6px 0 12px}h2{font-size:20px;margin:0}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:10px}.top h2{flex:1}
+button{font:inherit;border:0;border-radius:10px;padding:9px 14px;background:var(--card);color:var(--tx);border:1px solid var(--ln);cursor:pointer}
+button.p{background:var(--ac);color:var(--ac2);border-color:var(--ac);font-weight:600}
+button.d{color:#d33}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:12px;margin-bottom:10px}
+.wk{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;color:var(--mu)}
+.wk b{color:var(--tx)}
+.part{display:flex;align-items:center;gap:10px;padding:14px 12px}
+.part .n{flex:1;font-size:18px;font-weight:600}.part .c{font-size:13px;color:var(--mu)}
+.badge{min-width:38px;text-align:center;border-radius:20px;padding:4px 10px;background:var(--bg);font-weight:700}
+.badge.on{background:var(--ac);color:var(--ac2)}
+.sets{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 12px;background:var(--card);border:1px solid var(--ln);border-radius:14px;margin-bottom:10px}
+.sets .v{font-size:26px;font-weight:700;min-width:40px;text-align:center}
+.sets button{width:46px;height:46px;font-size:24px;padding:0}
+.ex>summary{list-style:none;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.ex>summary::-webkit-details-marker{display:none}.ex>summary:after{content:"▾";color:var(--mu)}
+.ex[open]>summary:after{content:"▴"}
+.lb{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 3px}
+.tx{white-space:pre-wrap}
+input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:8px}
+textarea{min-height:70px;resize:vertical}
+.imgs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.imgs div{position:relative;flex:none}.imgs img{height:130px;border-radius:10px;display:block}
+.imgs i{position:absolute;top:4px;right:4px;background:#000a;color:#fff;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px;font-style:normal}
+a{color:var(--ac)}
+#ov{position:fixed;inset:0;background:#000e;display:none;align-items:center;justify-content:center;z-index:20}
+#ov img{max-width:100%;max-height:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mu{color:var(--mu);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="ov"><img alt=""></div>
+<input type="file" id="fi" accept="image/*" multiple hidden>
+<script>
+var SEED=[
+["Prsa",[
+["Incline Dumbbell Press","17,5 / 22,5 / 25 / 27,5 kg","Šikmá lavice, přední část sedátka v drážce na kraji, lavice ve druhé drážce. Základní cvik na prsa. Lokty spíš dopředu, ruce trochu vytočené. Dole pod úrovní hrudníku na vteřinu podržet, být nadechnutý. Nesnažit se o moc velkou váhu."],
+["Bench press","tyč: 17,5 / 20 / 25 kg","Na zahřátí jen tyč. Nepokládat tyč až na hrudník. Tento cvik ničí ramena, lepší je pomalejší tempo. Lepší šikmo na stroji nebo tlaky s jednoručkami."],
+["Chest press (stroj)","7,5 / 10 / 15 kg","Madla uprostřed ruky, správně nastavit sedlo, madla v úrovni prsou. Plynule."],
+["Machine press / Bench press machine","50 / 55 / 60 / 65 / 70 / 75 kg","Zadek normálně na sedlo pokud cvičím střed prsou, na kraj pokud spodek prsou. Nedávat ruce moc dozadu, lokty nedávat dolů."],
+["Cable crossover","15 kg na každou ruku","Ruce nahoře nespojovat, nehrbit se, ruce skoro k sobě."],
+["Incline Dumbbell Fly (rozpažky)","12,5 / 17,5 / 20 kg","Nahoře se nespojovat. Nesnažit se o velkou váhu."],
+["Chest dips","","Klasická hrazda bez pomoci. Naklonit se, nohy na kraji. Spodní část hrudníku."],
+["Pullover","15 / 20 kg","Vleže."]
+]],
+["Záda",[
+["Lat pulldown","3 série: 40 / 50 / 60 / 65 kg","Vyspulit prsa, jako bych chtěl tleskout lopatkama. Top cvik na záda. Na široko tyč, chvíli podržet."],
+["Seated row","50 / 55 / 60 / 65 / 70 kg","Top cvik na záda podle Lamky. Jiné madlo viz foto."],
+["Dumbbell row","zahřátí 7,5 kg; 3 série 15 kg; 27,5 kg","Při spouštění ruku dopředu, natáhnout ruku. Loket tahat dozadu ke kyčlím, nevytahovat bicepsem."],
+["Assisted pull-up machine","","Široký úchop, bez pomoci. Nahoru ruce naklonit dopředu, k sobě naklonit dozadu."],
+["Close grip lat pulldown","50 / 60 / 65 kg","Úchop u hrazdy, stáhnout až na hrudník."],
+["Barbell row","10 kg na každou stranu","Na stroji: kolena úplně na kraj, zakloněný, aby zabírala prsa."],
+["Low row","","Úplně propnout ruce, potom lopatky sevřít."],
+["Mrtvý tah","","Je to základ u silového tréninku."]
+]],
+["Biceps",[
+["Barbell biceps curl","10 / 12,5 / 15 kg","Varianta 7x7x7. Pouze 3 série, dojet opakování. Netlačit zbytečně moc váhy."],
+["Preacher curl","na zahřátí jen tyč; 3x 5 kg na každé straně","Pořádně se opřít. Snažit se nezvedat moc lokty."],
+["Kladiva vestoje","12,5 / 15 kg","S vytáčením, střídání. Vytáčet hned."],
+["Kladiva vsedě","12,5 / 15 kg","Obě činky najednou, bez vytáčení. Lavice šikmo."],
+["Dumbbell Hammer Curls","10 / 15 / 17,5 / 20 kg","Do záhybu palce, šikmo k prsům."],
+["Kladka","25 / 35 / 40 kg","Obouruč vsedě, co nejblíže ke stroji."]
+]],
+["Triceps",[
+["Skull crusher","10 / 12,5 kg","NEBEZPEČNÝ NA LOKTY, spíše omezit."],
+["Triceps bench press","10 kg na každou; 17,5 / 22,5 kg","Ukazováček na hladký povrch."],
+["Triceps pushdown","trojúhelník 55–60 kg; lana 25–40 kg; tyč 40–60 kg","Hlavně propnout pořádně ruce, palec nahoru, blízko stojanu, chvíli dole podržet. Pozor lokty držet, mírně pokrčit kolena."],
+["Jednoručky za hlavu vleže","10 / 12,5 / 15 kg","Pozor na zápěstí, nelámat v zápěstí. Lokty u sebe, dole podržet."],
+["Triceps machine","45 / 50 / 55 kg","Lokty od těla, nepředklánět se."],
+["Kladka jednou rukou","20 / 25 / 30 / 35 / 40 kg","Kladku nastavit do půlky, prostředníček na hladký povrch."]
+]],
+["Ramena",[
+["Rozpažování v předklonu","7,5 / 10 kg",""],
+["One-arm cable lateral raise","15 kg","Nedávat nad ramena. Nahoře podržet. Nepouštět úplně k nohám, tam už sval nepracuje."],
+["Arnold press","12,5 / 15 / 17,5 kg","Lavice skoro svislá."],
+["Pec fly (zadní ramena)","55 / 60 / 65 / 70 / 75 / 80 kg","Tahat k prsám, hlavně lokty na úroveň ramen."],
+["Upright row","10 / 12,5 / 15 kg na každou stranu","Širší úchop, delší tyčka."],
+["Tlaky jednoručky","15 / 17,5 / 25 kg","Lavice svislá, roztáhnout ruce."],
+["Rozpažky vsedě","7,5 / 10 / 12,5 kg","Zvedat lokty."],
+["Shoulder Press Machine","20 / 22,5 / 25 kg","Nahoru jet ve směru skoro s lavicí."],
+["Military press","30 / 32,5 / 35 kg","Přední ramenní svaly se zatěžují dobře při bench pressu. Spíše brát menší váhy."],
+["Dumbbell shrugs","","Doplnit informace."]
+]],
+["Nohy",[
+["Předkopávání","30 / 35 / 40 / 45 kg","Špičky od sebe zapojují vnitřní sval. Vydržet nahoře napnuté."],
+["Lýtka","30 / 35 / 40 kg","Nahoře špičky směrem nahoru, propnout co to jde."],
+["Leg press","54 / 76 kg","Lepší leg press nebo hacken dřep. Dole chvíli počkat."],
+["Zakopávání","5 / 12,5 kg","Opírat se o sedátko a koleno podepřené."]
+]],
+["Břicho",[
+["Boční plank","","Hluboké stabilizátory, dolní záda."],
+["Rollout","",""],
+["Dead bug","",""],
+["Pallof press","","Vydechnout, zatnout břicho (žebra stáhnout dolů), vytlačit ruce před sebe a držet bez pootočení trupu. 10–20 s nebo 8–12 opakování, 2–4 série na stranu."],
+["Dřevorubec na kladce","","Táhnout/zdvihat madlo obloukem přes tělo bez lámání v bedrech. 8–12 opakování na stranu, 2–4 série."],
+["Reverse crunch","",""],
+["Hyperextenze / Good morning","","Dolní záda/extenzory."]
+]],
+["Kardio",[["Kardio","",""]]],
+["Hluboké stabilizační svalstvo",[
+["Kmitání ke kotníkům","","Lopatky pár cm nad zem, ke kotníkům, ale nemusím se jich dotknout. Nejde o rychlost. 5–10 opakování na každou stranu."],
+["Plank","","Hlavu rovně, neprohýbat se. Vydržet 20–40 s bez přerušení techniky, pak přidat kotouč. Zatnout břicho a hýždě, ramena od sebe."],
+["Stahování kladky","60 kg","Zatnout břicho, nejlepší na přímé břišní svaly."],
+["Spiderman plank","",""]
+]]
+];
+var S,V={p:null,e:false,o:0,img:null},DB;
+var uid=function(){return Math.random().toString(36).slice(2,9)};
+function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
+function idb(){return new Promise(function(r,j){var q=indexedDB.open("fp",1);q.onupgradeneeded=function(){q.result.createObjectStore("s")};q.onsuccess=function(){r(q.result)};q.onerror=j})}
+async function load(){try{var d=await idb();return await new Promise(function(r){var q=d.transaction("s").objectStore("s").get("d");q.onsuccess=function(){r(q.result)};q.onerror=function(){r()}})}catch(e){try{return JSON.parse(localStorage.getItem("fp"))}catch(x){}}}
+async function save(){try{var d=await idb();d.transaction("s","readwrite").objectStore("s").put(S,"d")}catch(e){try{localStorage.setItem("fp",JSON.stringify(S))}catch(x){}}}
+function wk(o){var d=new Date();d.setDate(d.getDate()+7*o);d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));var n=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-n);var y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return d.getUTCFullYear()+"-"+String(Math.ceil(((d-y)/864e5+1)/7)).padStart(2,"0")}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function cnt(pid){return((S.sets[wk(V.o)]||{})[pid])||0}
+function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":"Týden "+wk(V.o)}
+function lnk(t){return esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">odkaz</a>')}
+function exHtml(x,e){
+ var im='<div class="imgs">'+x.imgs.map(function(s,i){return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>';
+ if(!e)return'<details class="card ex"><summary><span>'+esc(x.name)+'</span></summary>'+
+  (x.w?'<div class="lb">Váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+
+  (x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+
+  (x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+
+  (x.imgs.length?'<div class="lb">Obrázky</div>'+im:'')+'</details>';
+ return'<div class="card"><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="lb">Váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky</div>'+im+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button></div></div>'}
+function render(){
+ var h="",p=S.parts.find(function(q){return q.id==V.p});
+ if(!p){V.p=null;
+  var tot=S.parts.reduce(function(a,q){return a+cnt(q.id)},0);
+  h='<h1>Můj fitness plán</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
+  S.parts.map(function(q){var c=cnt(q.id);return'<div class="card part" data-a="open" data-p="'+q.id+'"><div class="n">'+esc(q.name)+'<div class="c">'+q.ex.length+' cviků</div></div><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'}).join("")+
+  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="bk">Záloha</button></div><div id="bkb"></div>';
+ }else{
+  h='<div class="top"><button data-a="back">‹ Zpět</button><h2>'+esc(p.name)+'</h2><button data-a="edit" class="'+(V.e?'p':'')+'">'+(V.e?'Hotovo':'Upravit')+'</button></div>'+
+  '<div class="sets"><div><div class="mu">'+wkLabel()+' · série</div></div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
+  if(V.e)h+='<div class="card"><input data-f="pname" value="'+esc(p.name)+'"><div class="row"><button class="d" data-a="delpart">Smazat partii</button></div></div>';
+  h+=p.ex.map(function(x){return exHtml(x,V.e)}).join("");
+  if(V.e)h+='<button class="p" data-a="addex" style="width:100%">+ Přidat cvik</button>';
+ }
+ var open=[].map.call(document.querySelectorAll("details[open]"),function(d){return d.dataset.k});
+ document.getElementById("app").innerHTML=h;
+}
+function fx(id){for(var i=0;i<S.parts.length;i++){var x=S.parts[i].ex.find(function(e){return e.id==id});if(x)return x}}
+function curP(){return S.parts.find(function(q){return q.id==V.p})}
+function setN(d){var k=wk(V.o);S.sets[k]=S.sets[k]||{};S.sets[k][V.p]=Math.max(0,cnt(V.p)+d)}
+function shrink(f){return new Promise(function(r){var rd=new FileReader();rd.onload=function(){var im=new Image();im.onload=function(){var s=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.75))};im.src=rd.result};rd.readAsDataURL(f)})}
+document.addEventListener("click",function(ev){
+ var t=ev.target.closest("[data-a]");if(!t)return;var a=t.dataset.a,p=curP();
+ if(a=="open"){V.p=t.dataset.p;V.e=false;scrollTo(0,0)}
+ else if(a=="back"){V.p=null;V.e=false}
+ else if(a=="edit")V.e=!V.e;
+ else if(a=="wp")V.o--;else if(a=="wn")V.o=Math.min(0,V.o+1);
+ else if(a=="pl")setN(1);else if(a=="m")setN(-1);
+ else if(a=="addpart"){var n=prompt("Název partie:");if(!n)return;S.parts.push({id:uid(),name:n,ex:[]})}
+ else if(a=="delpart"){if(!confirm("Smazat celou partii včetně cviků?"))return;S.parts=S.parts.filter(function(q){return q!=p});V.p=null}
+ else if(a=="addex"){p.ex.push({id:uid(),name:"Nový cvik",w:"",n:"",links:"",imgs:[]})}
+ else if(a=="delex"){if(!confirm("Smazat cvik?"))return;p.ex=p.ex.filter(function(x){return x.id!=t.dataset.x})}
+ else if(a=="addimg"){V.img=t.dataset.x;document.getElementById("fi").click();return}
+ else if(a=="rmimg"){fx(t.dataset.x).imgs.splice(+t.dataset.i,1)}
+ else if(a=="zoom"){var o=document.getElementById("ov");o.firstChild.src=fx(t.dataset.x).imgs[+t.dataset.s];o.style.display="flex";return}
+ else if(a=="bk"){var b=document.getElementById("bkb");b.innerHTML='<div class="card"><div class="mu">Zkopíruj text jako zálohu, nebo sem vlož zálohu a načti.</div><textarea id="bt">'+esc(JSON.stringify(S))+'</textarea><div class="row"><button id="bc">Zkopírovat</button><button class="p" id="bl">Načíst</button></div></div>';
+  document.getElementById("bc").onclick=function(){var x=document.getElementById("bt");x.select();try{navigator.clipboard.writeText(x.value)}catch(e){document.execCommand("copy")}};
+  document.getElementById("bl").onclick=function(){try{var d=JSON.parse(document.getElementById("bt").value);if(!d.parts)throw 0;if(!confirm("Přepsat současná data zálohou?"))return;S=d;save();render()}catch(e){alert("Neplatná záloha")}};return}
+ save();render()});
+document.getElementById("ov").onclick=function(){this.style.display="none"};
+document.addEventListener("change",function(ev){var t=ev.target,f=t.dataset.f;if(!f)return;
+ if(f=="pname")curP().name=t.value;else fx(t.dataset.x)[f]=t.value;save()});
+document.getElementById("fi").onchange=async function(){var x=fx(V.img);for(var i=0;i<this.files.length;i++)x.imgs.push(await shrink(this.files[i]));this.value="";save();render()};
+load().then(function(d){S=d&&d.parts?d:seed();if(!d)save();render()});
+if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+</script>
+</body>
+</html>
