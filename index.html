@@ -66,6 +66,7 @@ a{color:var(--ac)}
 <div id="app"></div>
 <div id="ov"><img alt=""></div>
 <input type="file" id="fi" accept="image/*" multiple hidden>
+<input type="file" id="fj" accept=".json,application/json" hidden>
 <script>
 var SEED=[
 ["Prsa",[
@@ -153,16 +154,16 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return
 function cnt(pid){return((S.sets[wk(V.o)]||{})[pid])||0}
 function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":"Týden "+wk(V.o)}
 function lnk(t){return esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">odkaz</a>')}
-function imgs(x,e){return'<div class="imgs">'+x.imgs.map(function(s,i){return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>'}
+function imgs(x,e,from){from=from||0;return'<div class="imgs">'+x.imgs.map(function(s,i){if(i<from)return'';return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>'}
 function exHtml(x,i,n){
- var th=x.imgs[0]?'<img class="th" src="'+x.imgs[0]+'" alt="">':'<div class="th">📷</div>';
+ var th=x.imgs[0]?'<img class="th" src="'+x.imgs[0]+'"'+(V.x==x.id&&!V.r&&V.ed!=x.id?' data-a="zoom" data-x="'+x.id+'" data-s="0"':'')+' alt="">':'<div class="th">📷</div>';
  var dn=isDone(x.id),ck=V.r?'':'<button class="ck'+(dn?' on':'')+'" data-a="ck" data-x="'+x.id+'">'+(dn?'✓':'')+'</button>';var mv=V.r?'<div class="mv"><button data-a="top" data-x="'+x.id+'"'+(i==0?' disabled':'')+'>⤒</button><button data-a="up" data-x="'+x.id+'"'+(i==0?' disabled':'')+'>▲</button><button data-a="down" data-x="'+x.id+'"'+(i==n-1?' disabled':'')+'>▼</button></div>':'';
  var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog" data-x="'+x.id+'"')+'>'+th+'<div class="i"><div class="nm">'+esc(x.name)+'</div>'+(x.cur?'<div class="wt">'+esc(x.cur)+'</div>':'<div class="wt e">váha nezadána</div>')+'</div>'+mv+ck+'</div>';
  if(V.x==x.id&&!V.r){
   if(V.ed==x.id){
    h+='<div class="dt"><div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první je v řádku)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
   }else{
-   h+='<div class="dt">'+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+(x.imgs.length?'<div class="lb">Obrázky</div>'+imgs(x,false):'')+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
+   h+='<div class="dt">'+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+(x.imgs.length>1?'<div class="lb">Další obrázky</div>'+imgs(x,false,1):'')+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
   }
  }
  return h+'</div>'}
@@ -172,7 +173,7 @@ function render(){
   var tot=S.parts.reduce(function(a,q){return a+cnt(q.id)},0);
   h='<h1>Můj fitness plán</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
   '<div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n">'+esc(q.name)+'</div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
-  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button><button data-a="bk">Záloha</button></div><div id="bkb"></div>';
+  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div>';
  }else{
   h='<div class="top"><button data-a="back">‹</button><h2>'+esc(p.name)+'</h2><button data-a="rord" class="'+(V.r?'p':'')+'">'+(V.r?'Hotovo':'↕ Řadit')+'</button><button data-a="pset">⚙</button></div>'+
   '<div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · hotovo '+doneN(p)+'/'+p.ex.length+'</span><button data-a="wn">›</button></div><div class="sets"><div class="mu">série</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
@@ -208,10 +209,10 @@ document.addEventListener("click",function(ev){
  else if(a=="addimg"){V.img=id;document.getElementById("fi").click();return}
  else if(a=="rmimg"){fx(id).imgs.splice(+t.dataset.i,1)}
  else if(a=="zoom"){var o=document.getElementById("ov");o.firstChild.src=fx(id).imgs[+t.dataset.s];o.style.display="flex";return}
- else if(a=="bk"){var b=document.getElementById("bkb");b.innerHTML='<div class="card"><div class="mu">Zkopíruj text jako zálohu, nebo sem vlož zálohu a načti.</div><textarea id="bt">'+esc(JSON.stringify(S))+'</textarea><div class="row"><button id="bc">Zkopírovat</button><button class="p" id="bl">Načíst</button></div></div>';
-  document.getElementById("bc").onclick=function(){var x=document.getElementById("bt");x.select();try{navigator.clipboard.writeText(x.value)}catch(e){document.execCommand("copy")}};
-  document.getElementById("bl").onclick=function(){try{var d=JSON.parse(document.getElementById("bt").value);if(!d.parts)throw 0;if(!confirm("Přepsat současná data zálohou?"))return;S=d;mig();save();render()}catch(e){alert("Neplatná záloha")}};return}
+ else if(a=="exp"){var bl=new Blob([JSON.stringify(S)],{type:"application/json"}),an=document.createElement("a");an.href=URL.createObjectURL(bl);an.download="fitness-zaloha-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(an);an.click();setTimeout(function(){URL.revokeObjectURL(an.href);an.remove()},1500);return}
+ else if(a=="imp"){document.getElementById("fj").click();return}
  save();render()});
+document.getElementById("fj").onchange=function(){var inp=this,f=inp.files[0];if(!f)return;f.text().then(function(t){try{var d=JSON.parse(t);if(!d.parts||!Array.isArray(d.parts))throw 0;if(!confirm("Načíst zálohu ("+d.parts.length+" partií)? Současná data se přepíšou."))return;S=d;mig();save();V.p=null;V.x=V.ed=null;render()}catch(e){alert("Soubor není platná záloha.")}inp.value=""})};
 document.getElementById("ov").onclick=function(){this.style.display="none"};
 document.addEventListener("change",function(ev){var t=ev.target,f=t.dataset.f;if(!f)return;
  if(f=="pname")curP().name=t.value;else fx(t.dataset.x)[f]=t.value;save()});
