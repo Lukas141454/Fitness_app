@@ -59,6 +59,9 @@ a{color:var(--ac)}
 .pg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.pg .card{margin-bottom:0}
 .part{flex-direction:column;align-items:stretch;gap:6px;min-height:84px;word-break:break-word}.part .n{flex:none;font-size:17px;line-height:1.2}
 .part .c{display:flex;justify-content:space-between;align-items:center}.mh{display:flex;gap:6px}.mh button{flex:1;padding:8px 0}
+.seg{display:flex;gap:6px;margin-bottom:10px}.seg button{flex:1;padding:11px 4px;font-size:14px;border-radius:20px}.seg button.on{background:var(--ac);color:var(--ac2);border-color:var(--ac);font-weight:600}
+.bk{border-color:var(--ac);color:var(--ac);font-weight:600;white-space:nowrap}
+.st{position:absolute;right:0;top:0;font-size:26px;line-height:1;color:#f5b301}
 .dt{border-top:1px solid var(--ln);margin-top:12px;padding-top:2px}
 </style>
 </head>
@@ -145,7 +148,8 @@ var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
 function isDone(id){return((S.done[wk(V.o)]||{})[id])}
 function doneN(p){return p.ex.filter(function(x){return isDone(x.id)}).length}
-function mig(){S.done=S.done||{};S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
+function ordered(p){return p.ex.filter(function(x){return x.top}).concat(p.ex.filter(function(x){return !x.top}))}
+function mig(){S.done=S.done||{};S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
 function idb(){return new Promise(function(r,j){var q=indexedDB.open("fp",1);q.onupgradeneeded=function(){q.result.createObjectStore("s")};q.onsuccess=function(){r(q.result)};q.onerror=j})}
 async function load(){try{var d=await idb();return await new Promise(function(r){var q=d.transaction("s").objectStore("s").get("d");q.onsuccess=function(){r(q.result)};q.onerror=function(){r()}})}catch(e){try{return JSON.parse(localStorage.getItem("fp"))}catch(x){}}}
 async function save(){try{var d=await idb();d.transaction("s","readwrite").objectStore("s").put(S,"d")}catch(e){try{localStorage.setItem("fp",JSON.stringify(S))}catch(x){}}}
@@ -156,12 +160,12 @@ function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":"Týden
 function lnk(t){return esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">odkaz</a>')}
 function imgs(x,e,from){from=from||0;return'<div class="imgs">'+x.imgs.map(function(s,i){if(i<from)return'';return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>'}
 function exHtml(x,i,n){
- var th=x.imgs[0]?'<img class="th" src="'+x.imgs[0]+'"'+(V.x==x.id&&!V.r&&V.ed!=x.id?' data-a="zoom" data-x="'+x.id+'" data-s="0"':'')+' alt="">':'<div class="th">📷</div>';
- var dn=isDone(x.id),ck=V.r?'':'<button class="ck'+(dn?' on':'')+'" data-a="ck" data-x="'+x.id+'">'+(dn?'✓':'')+'</button>';var mv=V.r?'<div class="mv"><button data-a="top" data-x="'+x.id+'"'+(i==0?' disabled':'')+'>⤒</button><button data-a="up" data-x="'+x.id+'"'+(i==0?' disabled':'')+'>▲</button><button data-a="down" data-x="'+x.id+'"'+(i==n-1?' disabled':'')+'>▼</button></div>':'';
- var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog" data-x="'+x.id+'"')+'>'+th+'<div class="i"><div class="nm">'+esc(x.name)+'</div>'+(x.cur?'<div class="wt">'+esc(x.cur)+'</div>':'<div class="wt e">váha nezadána</div>')+'</div>'+mv+ck+'</div>';
+ var P=curP().ex,cu=i>0&&!!P[i-1].top==!!x.top,cd=i<n-1&&!!P[i+1].top==!!x.top,star=x.top&&!V.r?'<span class="st">★</span>':'';var th=x.imgs[0]?'<img class="th" src="'+x.imgs[0]+'"'+(V.x==x.id&&!V.r&&V.ed!=x.id?' data-a="zoom" data-x="'+x.id+'" data-s="0"':'')+' alt="">':'<div class="th">📷</div>';
+ var dn=isDone(x.id),ck=V.r?'':'<button class="ck'+(dn?' on':'')+'" data-a="ck" data-x="'+x.id+'">'+(dn?'✓':'')+'</button>';var mv=V.r?'<div class="mv"><button data-a="top" data-x="'+x.id+'"'+(cu?'':' disabled')+'>⤒</button><button data-a="up" data-x="'+x.id+'"'+(cu?'':' disabled')+'>▲</button><button data-a="down" data-x="'+x.id+'"'+(cd?'':' disabled')+'>▼</button></div>':'';
+ var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog" data-x="'+x.id+'"')+'>'+th+'<div class="i"><div class="nm"'+(x.top&&!V.r?' style="padding-right:30px"':'')+'>'+esc(x.name)+'</div>'+(x.cur?'<div class="wt">'+esc(x.cur)+'</div>':'<div class="wt e">váha nezadána</div>')+'</div>'+mv+ck+star+'</div>';
  if(V.x==x.id&&!V.r){
   if(V.ed==x.id){
-   h+='<div class="dt"><div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první je v řádku)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
+   h+='<div class="dt"><div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="row"><button data-a="tg" data-x="'+x.id+'" class="'+(x.top?'p':'')+'">'+(x.top?'★ Top cvik':'☆ Označit jako top cvik')+'</button></div><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první je v řádku)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
   }else{
    h+='<div class="dt">'+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+(x.imgs.length>1?'<div class="lb">Další obrázky</div>'+imgs(x,false,1):'')+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
   }
@@ -175,11 +179,13 @@ function render(){
   '<div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n">'+esc(q.name)+'</div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
   '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div>';
  }else{
-  h='<div class="top"><button data-a="back">‹</button><h2>'+esc(p.name)+'</h2><button data-a="rord" class="'+(V.r?'p':'')+'">'+(V.r?'Hotovo':'↕ Řadit')+'</button><button data-a="pset">⚙</button></div>'+
-  '<div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · hotovo '+doneN(p)+'/'+p.ex.length+'</span><button data-a="wn">›</button></div><div class="sets"><div class="mu">série</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
-  if(V.s)h+='<div class="card"><div class="lb">Název partie</div><input data-f="pname" value="'+esc(p.name)+'"><div class="row"><button class="d" data-a="delpart">Smazat partii</button></div></div>';
+  h='<div class="top"><button class="bk" data-a="back">← Partie</button><h2>'+esc(p.name)+'</h2></div>';
+  if(V.r)h+='<div class="card" style="display:flex;align-items:center;justify-content:space-between"><b>Řazení cviků</b><button class="p" data-a="rord">Hotovo</button></div>';
+  h+='<div class="seg"><button data-a="wk0" class="'+(V.o==0?'on':'')+'">Tento týden</button><button data-a="wk1" class="'+(V.o==-1?'on':'')+'">Minulý týden</button><button data-a="wk2" class="'+(V.o<-1?'on':'')+'">'+(V.o<-1?'před '+(-V.o)+' týdny':'Starší')+'</button></div>'+
+  '<div class="sets"><div class="mu">série<br>hotovo '+doneN(p)+'/'+p.ex.length+'</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
   h+=p.ex.map(function(x,i){return exHtml(x,i,p.ex.length)}).join("");
-  h+='<button class="p" data-a="addex" style="width:100%">+ Přidat cvik</button>';
+  h+='<button class="p" data-a="addex" style="width:100%">+ Přidat cvik</button><div class="row"><button data-a="rord" class="'+(V.r?'p':'')+'">'+(V.r?'Hotovo':'↕ Řadit cviky')+'</button><button data-a="pset">⚙ Partie</button></div>';
+  if(V.s)h+='<div class="card" style="margin-top:10px"><div class="lb">Název partie</div><input data-f="pname" value="'+esc(p.name)+'"><div class="row"><button class="d" data-a="delpart">Smazat partii</button></div></div>';
  }
  document.getElementById("app").innerHTML=h;
 }
@@ -195,11 +201,13 @@ document.addEventListener("click",function(ev){
  else if(a=="ed")V.ed=id;else if(a=="done")V.ed=null;
  else if(a=="rord"){V.r=!V.r;V.x=V.ed=null}
  else if(a=="pset")V.s=!V.s;
- else if(a=="up"||a=="down"||a=="top"){var i=p.ex.findIndex(function(x){return x.id==id}),x=p.ex.splice(i,1)[0];p.ex.splice(a=="top"?0:a=="up"?i-1:i+1,0,x)}
+ else if(a=="up"||a=="down"||a=="top"){var i=p.ex.findIndex(function(x){return x.id==id}),x=p.ex.splice(i,1)[0],gs=x.top?0:p.ex.filter(function(y){return y.top}).length;p.ex.splice(a=="top"?gs:a=="up"?i-1:i+1,0,x)}
+ else if(a=="tg"){var x=fx(id);x.top=!x.top;p.ex=ordered(p)}
  else if(a=="nw"){var x=fx(id),v=prompt("Nová nejtěžší váha:",x.cur);if(!v)return;if(x.cur)x.w=(x.w?x.w+"\n":"")+x.cur+" (do "+new Date().toLocaleDateString("cs-CZ")+")";x.cur=v}
  else if(a=="ck"){var k=wk(V.o);S.done[k]=S.done[k]||{};if(S.done[k][id])delete S.done[k][id];else S.done[k][id]=1}
  else if(a=="hrd")V.hr=!V.hr
  else if(a=="pmv"){var i=S.parts.findIndex(function(q){return q.id==id}),j=i+ +t.dataset.d;if(j<0||j>=S.parts.length)return;var q=S.parts.splice(i,1)[0];S.parts.splice(j,0,q)}
+ else if(a=="wk0")V.o=0;else if(a=="wk1")V.o=-1;else if(a=="wk2")V.o=V.o<-1?V.o-1:-2;
  else if(a=="wp")V.o--;else if(a=="wn")V.o=Math.min(0,V.o+1);
  else if(a=="pl")setN(1);else if(a=="m")setN(-1);
  else if(a=="addpart"){var n=prompt("Název partie:");if(!n)return;S.parts.push({id:uid(),name:n,ex:[]})}
