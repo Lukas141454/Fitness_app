@@ -143,13 +143,14 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var S,V={hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
+var VER="v10";
+var S,V={pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
 function isDone(id){return((S.done[wk(V.o)]||{})[id])}
 function doneN(p){return p.ex.filter(function(x){return isDone(x.id)}).length}
 function ordered(p){return p.ex.filter(function(x){return x.top}).concat(p.ex.filter(function(x){return !x.top}))}
-function mig(){S.done=S.done||{};S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
+function mig(){S.done=S.done||{};S.warm=S.warm||"";if(!Array.isArray(S.plan))S.plan=["","","","","","",""];S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
 function idb(){return new Promise(function(r,j){var q=indexedDB.open("fp",1);q.onupgradeneeded=function(){q.result.createObjectStore("s")};q.onsuccess=function(){r(q.result)};q.onerror=j})}
 async function load(){try{var d=await idb();return await new Promise(function(r){var q=d.transaction("s").objectStore("s").get("d");q.onsuccess=function(){r(q.result)};q.onerror=function(){r()}})}catch(e){try{return JSON.parse(localStorage.getItem("fp"))}catch(x){}}}
 async function save(){try{var d=await idb();d.transaction("s","readwrite").objectStore("s").put(S,"d")}catch(e){try{localStorage.setItem("fp",JSON.stringify(S))}catch(x){}}}
@@ -171,13 +172,25 @@ function exHtml(x,i,n){
   }
  }
  return h+'</div>'}
+function pgHtml(){
+ var w=V.pg=="warm",h='<div class="top"><button class="bk" data-a="back2">← Partie</button><h2>'+(w?"🔥 Zahřátí":"📅 Týdenní plán")+'</h2></div>';
+ if(w){
+  if(V.pe)h+='<div class="card"><textarea data-f="warm" style="min-height:320px">'+esc(S.warm)+'</textarea><div class="row"><button class="p" data-a="pdone">Hotovo</button></div></div>';
+  else h+='<div class="card">'+(S.warm?'<div class="tx">'+esc(S.warm)+'</div>':'<div class="mu">Zatím nic. Klepni na Upravit a napiš si, jak se zahřívat.</div>')+'<div class="row"><button data-a="pedit">✎ Upravit</button></div></div>';
+ }else{
+  var D=["Pondělí","Úterý","Středa","Čtvrtek","Pátek","Sobota","Neděle"],td=(new Date().getDay()+6)%7;
+  if(V.pe)h+=D.map(function(d,i){return'<div class="card"><div class="lb" style="margin-top:0">'+d+'</div><textarea data-f="plan" data-d="'+i+'" style="min-height:60px">'+esc(S.plan[i])+'</textarea></div>'}).join("")+'<button class="p" data-a="pdone" style="width:100%">Hotovo</button>';
+  else h+=D.map(function(d,i){var v=S.plan[i];return'<div class="card'+(i==td?' dn':'')+'"><div style="display:flex;justify-content:space-between"><b>'+d+'</b>'+(i==td?'<span class="mu">dnes</span>':'')+'</div>'+(v?'<div class="tx">'+esc(v)+'</div>':'<div class="mu">volno / nezadáno</div>')+'</div>'}).join("")+'<button data-a="pedit" style="width:100%">✎ Upravit plán</button>';
+ }
+ return h}
 function render(){
+ if(V.pg){document.getElementById("app").innerHTML=pgHtml();return}
  var h="",p=curP();
  if(!p){V.p=null;
   var tot=S.parts.reduce(function(a,q){return a+cnt(q.id)},0);
   h='<h1>Můj fitness plán</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
-  '<div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n">'+esc(q.name)+'</div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
-  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div>';
+  '<div class="pg"><div class="card part"'+(V.hr?'':' data-a="pg" data-x="warm"')+'><div class="n">🔥 Zahřátí</div><div class="c"><span>poznámky</span></div></div><div class="card part"'+(V.hr?'':' data-a="pg" data-x="plan"')+'><div class="n">📅 Týdenní plán</div><div class="c"><span>rozvrh</span></div></div></div><div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n">'+esc(q.name)+'</div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
+  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div><div class="mu" style="text-align:center;margin-top:20px">Verze '+VER+'</div>';
  }else{
   h='<div class="top"><button class="bk" data-a="back">← Partie</button><h2>'+esc(p.name)+'</h2></div>';
   if(V.r)h+='<div class="card" style="display:flex;align-items:center;justify-content:space-between"><b>Řazení cviků</b><button class="p" data-a="rord">Hotovo</button></div>';
@@ -205,6 +218,9 @@ document.addEventListener("click",function(ev){
  else if(a=="tg"){var x=fx(id);x.top=!x.top;p.ex=ordered(p)}
  else if(a=="nw"){var x=fx(id),v=prompt("Nová nejtěžší váha:",x.cur);if(!v)return;if(x.cur)x.w=(x.w?x.w+"\n":"")+x.cur+" (do "+new Date().toLocaleDateString("cs-CZ")+")";x.cur=v}
  else if(a=="ck"){var k=wk(V.o);S.done[k]=S.done[k]||{};if(S.done[k][id])delete S.done[k][id];else S.done[k][id]=1}
+ else if(a=="pg"){V.pg=id;V.pe=false;scrollTo(0,0)}
+ else if(a=="back2"){V.pg=null;V.pe=false}
+ else if(a=="pedit")V.pe=true;else if(a=="pdone")V.pe=false;
  else if(a=="hrd")V.hr=!V.hr
  else if(a=="pmv"){var i=S.parts.findIndex(function(q){return q.id==id}),j=i+ +t.dataset.d;if(j<0||j>=S.parts.length)return;var q=S.parts.splice(i,1)[0];S.parts.splice(j,0,q)}
  else if(a=="wk0")V.o=0;else if(a=="wk1")V.o=-1;else if(a=="wk2")V.o=V.o<-1?V.o-1:-2;
@@ -223,7 +239,7 @@ document.addEventListener("click",function(ev){
 document.getElementById("fj").onchange=function(){var inp=this,f=inp.files[0];if(!f)return;f.text().then(function(t){try{var d=JSON.parse(t);if(!d.parts||!Array.isArray(d.parts))throw 0;if(!confirm("Načíst zálohu ("+d.parts.length+" partií)? Současná data se přepíšou."))return;S=d;mig();save();V.p=null;V.x=V.ed=null;render()}catch(e){alert("Soubor není platná záloha.")}inp.value=""})};
 document.getElementById("ov").onclick=function(){this.style.display="none"};
 document.addEventListener("change",function(ev){var t=ev.target,f=t.dataset.f;if(!f)return;
- if(f=="pname")curP().name=t.value;else fx(t.dataset.x)[f]=t.value;save()});
+ if(f=="pname")curP().name=t.value;else if(f=="warm")S.warm=t.value;else if(f=="plan")S.plan[+t.dataset.d]=t.value;else fx(t.dataset.x)[f]=t.value;save()});
 document.getElementById("fi").onchange=async function(){var x=fx(V.img);for(var i=0;i<this.files.length;i++)x.imgs.push(await shrink(this.files[i]));this.value="";save();render()};
 load().then(function(d){S=d&&d.parts?d:seed();mig();save();render()});
 if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
