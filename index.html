@@ -75,6 +75,7 @@ a{color:var(--ac)}
 .oname{flex:1;min-width:0;align-self:center;font-size:18px;font-weight:700;line-height:1.25}
 .rc.o{width:auto;flex-direction:row;align-items:center;justify-content:flex-end;gap:10px}.rc.o .rb{flex-direction:row;align-items:center}
 .big img{display:block;width:100%;height:auto;border-radius:12px;margin-top:10px}
+.po{display:flex;align-items:center;gap:8px;margin-bottom:6px}.po .pn{width:22px;font-weight:700;color:var(--ac)}.po .pm{flex:1;font-weight:600}.po button{padding:7px 0;width:42px}
 .dt{border-top:1px solid var(--ln);margin-top:12px;padding-top:2px}
 </style>
 </head>
@@ -156,7 +157,7 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var VER="v14";
+var VER="v15";
 var S,V={po:0,pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
@@ -208,9 +209,13 @@ function pgHtml(){
  '<div class="card" style="text-align:center"><b>'+fd(m)+' – '+fd(e)+' '+e.getFullYear()+'</b><div class="mu">týden '+(+k.split("-")[1])+(V.po==0?' · tento týden':V.po==1?' · příští týden':V.po==-1?' · minulý týden':'')+'</div></div>'+
  '<div class="seg"><button data-a="ppw">◀ Předchozí</button><button data-a="pw0" class="'+(V.po==0?'on':'')+'">Tento týden</button><button data-a="pnw">Další ▶</button></div>';
  h+=D.map(function(d,i){
-  var ids=P[i]||[],body,date=new Date(m);date.setDate(date.getDate()+i);
-  if(V.pe)body='<div class="chips">'+S.parts.map(function(q){return'<button class="chip'+(ids.indexOf(q.id)>-1?' on':'')+'" data-a="pt" data-d="'+i+'" data-p="'+q.id+'">'+esc(q.name)+'</button>'}).join("")+'</div>';
-  else{var sel=S.parts.filter(function(q){return ids.indexOf(q.id)>-1});body=sel.length?'<div class="chips">'+sel.map(function(q){return'<button class="chip on" data-a="openp" data-p="'+q.id+'">'+esc(q.name)+'</button>'}).join("")+'</div>':'<div class="mu">volno</div>'}
+  var ids=P[i]=(P[i]||[]).filter(function(id){return S.parts.some(function(q){return q.id==id})}),body,date=new Date(m);date.setDate(date.getDate()+i);
+  var sel=ids.map(function(id){return S.parts.find(function(q){return q.id==id})});
+  if(V.pe){
+   body=sel.map(function(q,j){return'<div class="po"><span class="pn">'+(j+1)+'.</span><span class="pm">'+esc(q.name)+'</span><button data-a="pmu" data-d="'+i+'" data-j="'+j+'"'+(j==0?' disabled':'')+'>▲</button><button data-a="pmd" data-d="'+i+'" data-j="'+j+'"'+(j==sel.length-1?' disabled':'')+'>▼</button><button class="d" data-a="prm" data-d="'+i+'" data-j="'+j+'">✕</button></div>'}).join("");
+   var rest=S.parts.filter(function(q){return ids.indexOf(q.id)<0});
+   if(rest.length)body+='<div class="lb">Přidat</div><div class="chips">'+rest.map(function(q){return'<button class="chip" data-a="pt" data-d="'+i+'" data-p="'+q.id+'">+ '+esc(q.name)+'</button>'}).join("")+'</div>';
+  }else body=sel.length?'<div class="chips">'+sel.map(function(q,j){return'<button class="chip on" data-a="openp" data-p="'+q.id+'">'+(j+1)+'. '+esc(q.name)+'</button>'}).join("")+'</div>':'<div class="mu">volno</div>';
   var tdy=V.po==0&&i==td;
   return'<div class="card'+(tdy?' dn':'')+'"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><b>'+d+' <span class="mu">'+fd(date)+'</span></b>'+(tdy?'<span class="mu">dnes</span>':'')+'</div>'+body+'</div>'}).join("");
  if(V.pe)h+='<div class="row"><button data-a="pcp">⎘ Převzít z předchozího týdne</button></div>';
@@ -252,6 +257,8 @@ document.addEventListener("click",function(ev){
  else if(a=="ck"){var k=wk(V.o);S.done[k]=S.done[k]||{};if(S.done[k][id])delete S.done[k][id];else S.done[k][id]=1}
  else if(a=="pg"){V.pg=id;V.pe=false;V.po=0;scrollTo(0,0)}
  else if(a=="pt"){var arr=planFor(wk(V.po))[+t.dataset.d],pi=arr.indexOf(t.dataset.p);if(pi>-1)arr.splice(pi,1);else arr.push(t.dataset.p)}
+ else if(a=="pmu"||a=="pmd"){var ar=planFor(wk(V.po))[+t.dataset.d],j=+t.dataset.j,k2=a=="pmu"?j-1:j+1,tmp=ar[j];ar[j]=ar[k2];ar[k2]=tmp}
+ else if(a=="prm"){planFor(wk(V.po))[+t.dataset.d].splice(+t.dataset.j,1)}
  else if(a=="ppw")V.po--;else if(a=="pnw")V.po++;else if(a=="pw0")V.po=0;
  else if(a=="pcp"){var cu0=planGet(wk(V.po)).some(function(r){return r.length});if(cu0&&!confirm("Přepsat plán tohoto týdne?"))return;S.plans[wk(V.po)]=JSON.parse(JSON.stringify(planGet(wk(V.po-1))))}
  else if(a=="openp"){V.pg=null;V.pe=false;V.p=t.dataset.p;V.x=V.ed=null;V.r=V.s=false;scrollTo(0,0)}
