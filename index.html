@@ -62,6 +62,19 @@ a{color:var(--ac)}
 .seg{display:flex;gap:6px;margin-bottom:10px}.seg button{flex:1;padding:11px 4px;font-size:14px;border-radius:20px}.seg button.on{background:var(--ac);color:var(--ac2);border-color:var(--ac);font-weight:600}
 .bk{border-color:var(--ac);color:var(--ac);font-weight:600;white-space:nowrap}
 .st{position:absolute;right:0;top:0;font-size:26px;line-height:1;color:#f5b301}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{padding:8px 12px;border-radius:20px;font-size:14px}.chip.on{background:var(--ac);color:var(--ac2);border-color:var(--ac);font-weight:600}
+.rw{gap:8px;align-items:stretch}
+.th{width:auto;flex:1 1 0;min-width:0;height:112px}.th.ph{opacity:.5;font-size:26px}
+.th.nmx{flex:2 1 0;justify-content:flex-start;padding:10px;font-weight:600;font-size:16px;text-align:left;line-height:1.25}
+.rc{width:74px;flex:none;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between}
+.rb{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.rw .wt{font-size:18px;margin:0;text-align:right;line-height:1.1;word-break:break-word}
+.ck{position:static;width:38px;height:38px;font-size:22px;border-radius:10px}
+.st{position:static;font-size:17px}
+.mv button{padding:4px 0}
+.oname{flex:1;min-width:0;align-self:center;font-size:18px;font-weight:700;line-height:1.25}
+.rc.o{width:auto;flex-direction:row;align-items:center;justify-content:flex-end;gap:10px}.rc.o .rb{flex-direction:row;align-items:center}
+.big img{display:block;width:100%;height:auto;border-radius:12px;margin-top:10px}
 .dt{border-top:1px solid var(--ln);margin-top:12px;padding-top:2px}
 </style>
 </head>
@@ -143,14 +156,14 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var VER="v10";
-var S,V={pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
+var VER="v14";
+var S,V={po:0,pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
 function isDone(id){return((S.done[wk(V.o)]||{})[id])}
 function doneN(p){return p.ex.filter(function(x){return isDone(x.id)}).length}
 function ordered(p){return p.ex.filter(function(x){return x.top}).concat(p.ex.filter(function(x){return !x.top}))}
-function mig(){S.done=S.done||{};S.warm=S.warm||"";if(!Array.isArray(S.plan))S.plan=["","","","","","",""];S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
+function mig(){S.done=S.done||{};S.warm=S.warm||"";S.plans=S.plans||{};if(!Array.isArray(S.plan))S.plan=["","","","","","",""];S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
 function idb(){return new Promise(function(r,j){var q=indexedDB.open("fp",1);q.onupgradeneeded=function(){q.result.createObjectStore("s")};q.onsuccess=function(){r(q.result)};q.onerror=j})}
 async function load(){try{var d=await idb();return await new Promise(function(r){var q=d.transaction("s").objectStore("s").get("d");q.onsuccess=function(){r(q.result)};q.onerror=function(){r()}})}catch(e){try{return JSON.parse(localStorage.getItem("fp"))}catch(x){}}}
 async function save(){try{var d=await idb();d.transaction("s","readwrite").objectStore("s").put(S,"d")}catch(e){try{localStorage.setItem("fp",JSON.stringify(S))}catch(x){}}}
@@ -161,34 +174,53 @@ function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":"Týden
 function lnk(t){return esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">odkaz</a>')}
 function imgs(x,e,from){from=from||0;return'<div class="imgs">'+x.imgs.map(function(s,i){if(i<from)return'';return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>'}
 function exHtml(x,i,n){
- var P=curP().ex,cu=i>0&&!!P[i-1].top==!!x.top,cd=i<n-1&&!!P[i+1].top==!!x.top,star=x.top&&!V.r?'<span class="st">★</span>':'';var th=x.imgs[0]?'<img class="th" src="'+x.imgs[0]+'"'+(V.x==x.id&&!V.r&&V.ed!=x.id?' data-a="zoom" data-x="'+x.id+'" data-s="0"':'')+' alt="">':'<div class="th">📷</div>';
- var dn=isDone(x.id),ck=V.r?'':'<button class="ck'+(dn?' on':'')+'" data-a="ck" data-x="'+x.id+'">'+(dn?'✓':'')+'</button>';var mv=V.r?'<div class="mv"><button data-a="top" data-x="'+x.id+'"'+(cu?'':' disabled')+'>⤒</button><button data-a="up" data-x="'+x.id+'"'+(cu?'':' disabled')+'>▲</button><button data-a="down" data-x="'+x.id+'"'+(cd?'':' disabled')+'>▼</button></div>':'';
- var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog" data-x="'+x.id+'"')+'>'+th+'<div class="i"><div class="nm"'+(x.top&&!V.r?' style="padding-right:30px"':'')+'>'+esc(x.name)+'</div>'+(x.cur?'<div class="wt">'+esc(x.cur)+'</div>':'<div class="wt e">váha nezadána</div>')+'</div>'+mv+ck+star+'</div>';
+ var P=curP().ex,cu=i>0&&!!P[i-1].top==!!x.top,cd=i<n-1&&!!P[i+1].top==!!x.top,star=x.top&&!V.r?'<span class="st">★</span>':'';var zm=V.x==x.id&&!V.r&&V.ed!=x.id;
+function slot(k){var u=x.imgs[k];return u?'<img class="th" src="'+u+'"'+(zm?' data-a="zoom" data-x="'+x.id+'" data-s="'+k+'"':'')+' alt="">':'<div class="th ph">'+(k==0?'📷':'')+'</div>'}
+var dn=isDone(x.id),ck=V.r?'':'<button class="ck'+(dn?' on':'')+'" data-a="ck" data-x="'+x.id+'">'+(dn?'✓':'')+'</button>';
+star=x.top?'<span class="st">★</span>':'<span></span>';
+var mv=V.r?'<div class="mv"><button data-a="top" data-x="'+x.id+'"'+(cu?'':' disabled')+'>⤒</button><button data-a="up" data-x="'+x.id+'"'+(cu?'':' disabled')+'>▲</button><button data-a="down" data-x="'+x.id+'"'+(cd?'':' disabled')+'>▼</button></div>':'';
+var op=V.x==x.id&&!V.r,left=op?'<div class="oname">'+esc(x.name)+'</div>':(x.imgs.length?slot(0)+slot(1):'<div class="th nmx">'+esc(x.name)+'</div>');
+var rc=V.r?mv:'<div class="rc'+(op?' o':'')+'">'+star+'<div class="rb"><div class="wt">'+(x.cur?esc(x.cur):'–')+'</div>'+ck+'</div></div>';
+var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog" data-x="'+x.id+'"')+'>'+left+rc+'</div>';
  if(V.x==x.id&&!V.r){
   if(V.ed==x.id){
-   h+='<div class="dt"><div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="row"><button data-a="tg" data-x="'+x.id+'" class="'+(x.top?'p':'')+'">'+(x.top?'★ Top cvik':'☆ Označit jako top cvik')+'</button></div><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první je v řádku)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
+   h+='<div class="dt"><div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="row"><button data-a="tg" data-x="'+x.id+'" class="'+(x.top?'p':'')+'">'+(x.top?'★ Top cvik':'☆ Označit jako top cvik')+'</button></div><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první dva se ukazují v seznamu)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
   }else{
-   h+='<div class="dt">'+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+(x.imgs.length>1?'<div class="lb">Další obrázky</div>'+imgs(x,false,1):'')+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
+   h+='<div class="dt">'+(x.imgs.length?'<div class="big">'+x.imgs.map(function(u,i){return'<img src="'+u+'" data-a="zoom" data-x="'+x.id+'" data-s="'+i+'" alt="">'}).join("")+'</div>':'')+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+''+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
   }
  }
  return h+'</div>'}
+function mon(o){var d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+7*o);return d}
+function fd(d){return d.getDate()+". "+(d.getMonth()+1)+"."}
+function planGet(k){return(S.plans&&S.plans[k])||[[],[],[],[],[],[],[]]}
+function planFor(k){S.plans=S.plans||{};return S.plans[k]=S.plans[k]||[[],[],[],[],[],[],[]]}
 function pgHtml(){
- var w=V.pg=="warm",h='<div class="top"><button class="bk" data-a="back2">← Partie</button><h2>'+(w?"🔥 Zahřátí":"📅 Týdenní plán")+'</h2></div>';
- if(w){
+ var h;
+ if(V.pg=="warm"){
+  h='<div class="top"><button class="bk" data-a="back2">← Partie</button><h2>🔥 Zahřátí</h2></div>';
   if(V.pe)h+='<div class="card"><textarea data-f="warm" style="min-height:320px">'+esc(S.warm)+'</textarea><div class="row"><button class="p" data-a="pdone">Hotovo</button></div></div>';
   else h+='<div class="card">'+(S.warm?'<div class="tx">'+esc(S.warm)+'</div>':'<div class="mu">Zatím nic. Klepni na Upravit a napiš si, jak se zahřívat.</div>')+'<div class="row"><button data-a="pedit">✎ Upravit</button></div></div>';
- }else{
-  var D=["Pondělí","Úterý","Středa","Čtvrtek","Pátek","Sobota","Neděle"],td=(new Date().getDay()+6)%7;
-  if(V.pe)h+=D.map(function(d,i){return'<div class="card"><div class="lb" style="margin-top:0">'+d+'</div><textarea data-f="plan" data-d="'+i+'" style="min-height:60px">'+esc(S.plan[i])+'</textarea></div>'}).join("")+'<button class="p" data-a="pdone" style="width:100%">Hotovo</button>';
-  else h+=D.map(function(d,i){var v=S.plan[i];return'<div class="card'+(i==td?' dn':'')+'"><div style="display:flex;justify-content:space-between"><b>'+d+'</b>'+(i==td?'<span class="mu">dnes</span>':'')+'</div>'+(v?'<div class="tx">'+esc(v)+'</div>':'<div class="mu">volno / nezadáno</div>')+'</div>'}).join("")+'<button data-a="pedit" style="width:100%">✎ Upravit plán</button>';
- }
+  return h}
+ var D=["Pondělí","Úterý","Středa","Čtvrtek","Pátek","Sobota","Neděle"],td=(new Date().getDay()+6)%7,k=wk(V.po),m=mon(V.po),e=new Date(m);
+ e.setDate(e.getDate()+6);
+ var P=V.pe?planFor(k):planGet(k);
+ h='<div class="top"><button class="bk" data-a="back2">← Partie</button><h2>📅 Plán</h2><button data-a="'+(V.pe?'pdone':'pedit')+'" class="'+(V.pe?'p':'')+'">'+(V.pe?'Hotovo':'✎ Upravit')+'</button></div>'+
+ '<div class="card" style="text-align:center"><b>'+fd(m)+' – '+fd(e)+' '+e.getFullYear()+'</b><div class="mu">týden '+(+k.split("-")[1])+(V.po==0?' · tento týden':V.po==1?' · příští týden':V.po==-1?' · minulý týden':'')+'</div></div>'+
+ '<div class="seg"><button data-a="ppw">◀ Předchozí</button><button data-a="pw0" class="'+(V.po==0?'on':'')+'">Tento týden</button><button data-a="pnw">Další ▶</button></div>';
+ h+=D.map(function(d,i){
+  var ids=P[i]||[],body,date=new Date(m);date.setDate(date.getDate()+i);
+  if(V.pe)body='<div class="chips">'+S.parts.map(function(q){return'<button class="chip'+(ids.indexOf(q.id)>-1?' on':'')+'" data-a="pt" data-d="'+i+'" data-p="'+q.id+'">'+esc(q.name)+'</button>'}).join("")+'</div>';
+  else{var sel=S.parts.filter(function(q){return ids.indexOf(q.id)>-1});body=sel.length?'<div class="chips">'+sel.map(function(q){return'<button class="chip on" data-a="openp" data-p="'+q.id+'">'+esc(q.name)+'</button>'}).join("")+'</div>':'<div class="mu">volno</div>'}
+  var tdy=V.po==0&&i==td;
+  return'<div class="card'+(tdy?' dn':'')+'"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><b>'+d+' <span class="mu">'+fd(date)+'</span></b>'+(tdy?'<span class="mu">dnes</span>':'')+'</div>'+body+'</div>'}).join("");
+ if(V.pe)h+='<div class="row"><button data-a="pcp">⎘ Převzít z předchozího týdne</button></div>';
  return h}
 function render(){
  if(V.pg){document.getElementById("app").innerHTML=pgHtml();return}
  var h="",p=curP();
  if(!p){V.p=null;
   var tot=S.parts.reduce(function(a,q){return a+cnt(q.id)},0);
-  h='<h1>Můj fitness plán</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
+  h='<h1>No pain, no gain! 💪</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
   '<div class="pg"><div class="card part"'+(V.hr?'':' data-a="pg" data-x="warm"')+'><div class="n">🔥 Zahřátí</div><div class="c"><span>poznámky</span></div></div><div class="card part"'+(V.hr?'':' data-a="pg" data-x="plan"')+'><div class="n">📅 Týdenní plán</div><div class="c"><span>rozvrh</span></div></div></div><div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n">'+esc(q.name)+'</div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
   '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div><div class="mu" style="text-align:center;margin-top:20px">Verze '+VER+'</div>';
  }else{
@@ -218,7 +250,11 @@ document.addEventListener("click",function(ev){
  else if(a=="tg"){var x=fx(id);x.top=!x.top;p.ex=ordered(p)}
  else if(a=="nw"){var x=fx(id),v=prompt("Nová nejtěžší váha:",x.cur);if(!v)return;if(x.cur)x.w=(x.w?x.w+"\n":"")+x.cur+" (do "+new Date().toLocaleDateString("cs-CZ")+")";x.cur=v}
  else if(a=="ck"){var k=wk(V.o);S.done[k]=S.done[k]||{};if(S.done[k][id])delete S.done[k][id];else S.done[k][id]=1}
- else if(a=="pg"){V.pg=id;V.pe=false;scrollTo(0,0)}
+ else if(a=="pg"){V.pg=id;V.pe=false;V.po=0;scrollTo(0,0)}
+ else if(a=="pt"){var arr=planFor(wk(V.po))[+t.dataset.d],pi=arr.indexOf(t.dataset.p);if(pi>-1)arr.splice(pi,1);else arr.push(t.dataset.p)}
+ else if(a=="ppw")V.po--;else if(a=="pnw")V.po++;else if(a=="pw0")V.po=0;
+ else if(a=="pcp"){var cu0=planGet(wk(V.po)).some(function(r){return r.length});if(cu0&&!confirm("Přepsat plán tohoto týdne?"))return;S.plans[wk(V.po)]=JSON.parse(JSON.stringify(planGet(wk(V.po-1))))}
+ else if(a=="openp"){V.pg=null;V.pe=false;V.p=t.dataset.p;V.x=V.ed=null;V.r=V.s=false;scrollTo(0,0)}
  else if(a=="back2"){V.pg=null;V.pe=false}
  else if(a=="pedit")V.pe=true;else if(a=="pdone")V.pe=false;
  else if(a=="hrd")V.hr=!V.hr
