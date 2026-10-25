@@ -157,7 +157,7 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var VER="v15";
+var VER="v16";
 var S,V={po:0,pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
@@ -171,7 +171,7 @@ async function save(){try{var d=await idb();d.transaction("s","readwrite").objec
 function wk(o){var d=new Date();d.setDate(d.getDate()+7*o);d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));var n=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-n);var y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return d.getUTCFullYear()+"-"+String(Math.ceil(((d-y)/864e5+1)/7)).padStart(2,"0")}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function cnt(pid){return((S.sets[wk(V.o)]||{})[pid])||0}
-function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":"Týden "+wk(V.o)}
+function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":V.o==1?"Příští týden":"Týden "+wk(V.o)}
 function lnk(t){return esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">odkaz</a>')}
 function imgs(x,e,from){from=from||0;return'<div class="imgs">'+x.imgs.map(function(s,i){if(i<from)return'';return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>'}
 function exHtml(x,i,n){
@@ -231,8 +231,8 @@ function render(){
  }else{
   h='<div class="top"><button class="bk" data-a="back">← Partie</button><h2>'+esc(p.name)+'</h2></div>';
   if(V.r)h+='<div class="card" style="display:flex;align-items:center;justify-content:space-between"><b>Řazení cviků</b><button class="p" data-a="rord">Hotovo</button></div>';
-  h+='<div class="seg"><button data-a="wk0" class="'+(V.o==0?'on':'')+'">Tento týden</button><button data-a="wk1" class="'+(V.o==-1?'on':'')+'">Minulý týden</button><button data-a="wk2" class="'+(V.o<-1?'on':'')+'">'+(V.o<-1?'před '+(-V.o)+' týdny':'Starší')+'</button></div>'+
-  '<div class="sets"><div class="mu">série<br>hotovo '+doneN(p)+'/'+p.ex.length+'</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
+  h+='<div class="seg"><button data-a="wk2" class="'+(V.o<-1?'on':'')+'">'+(V.o<-1?'−'+(-V.o)+' týd.':'Starší')+'</button><button data-a="wk1" class="'+(V.o==-1?'on':'')+'">Minulý</button><button data-a="wk0" class="'+(V.o==0?'on':'')+'">Tento</button><button data-a="wk3" class="'+(V.o==1?'on':'')+'">Příští</button></div>'+
+  '<div class="sets"><div class="mu"><b style="color:var(--tx)">'+wkLabel()+'</b><br>série · hotovo '+doneN(p)+'/'+p.ex.length+'</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
   h+=p.ex.map(function(x,i){return exHtml(x,i,p.ex.length)}).join("");
   h+='<button class="p" data-a="addex" style="width:100%">+ Přidat cvik</button><div class="row"><button data-a="rord" class="'+(V.r?'p':'')+'">'+(V.r?'Hotovo':'↕ Řadit cviky')+'</button><button data-a="pset">⚙ Partie</button></div>';
   if(V.s)h+='<div class="card" style="margin-top:10px"><div class="lb">Název partie</div><input data-f="pname" value="'+esc(p.name)+'"><div class="row"><button class="d" data-a="delpart">Smazat partii</button></div></div>';
@@ -266,8 +266,8 @@ document.addEventListener("click",function(ev){
  else if(a=="pedit")V.pe=true;else if(a=="pdone")V.pe=false;
  else if(a=="hrd")V.hr=!V.hr
  else if(a=="pmv"){var i=S.parts.findIndex(function(q){return q.id==id}),j=i+ +t.dataset.d;if(j<0||j>=S.parts.length)return;var q=S.parts.splice(i,1)[0];S.parts.splice(j,0,q)}
- else if(a=="wk0")V.o=0;else if(a=="wk1")V.o=-1;else if(a=="wk2")V.o=V.o<-1?V.o-1:-2;
- else if(a=="wp")V.o--;else if(a=="wn")V.o=Math.min(0,V.o+1);
+ else if(a=="wk0")V.o=0;else if(a=="wk1")V.o=-1;else if(a=="wk3")V.o=1;else if(a=="wk2")V.o=V.o<-1?V.o-1:-2;
+ else if(a=="wp")V.o--;else if(a=="wn")V.o=Math.min(1,V.o+1);
  else if(a=="pl")setN(1);else if(a=="m")setN(-1);
  else if(a=="addpart"){var n=prompt("Název partie:");if(!n)return;S.parts.push({id:uid(),name:n,ex:[]})}
  else if(a=="delpart"){if(!confirm("Smazat celou partii včetně cviků?"))return;S.parts=S.parts.filter(function(q){return q!=p});V.p=null;V.s=false}
