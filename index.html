@@ -78,6 +78,8 @@ a{color:var(--ac)}
 .po{display:flex;align-items:center;gap:8px;margin-bottom:6px}.po .pn{width:22px;font-weight:700;color:var(--ac)}.po .pm{flex:1;font-weight:600}.po button{padding:7px 0;width:42px}
 .pn2{display:flex;align-items:center;gap:10px}
 .pi{width:46px;height:46px;border-radius:10px;object-fit:cover;flex:none;background:var(--bg)}.pi.ph{display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.45}
+.lk{display:inline-block;padding:14px 22px;margin:4px 8px 4px 0;border-radius:12px;background:var(--ac);color:var(--ac2);font-weight:700;font-size:17px;text-decoration:none}
+.ck.ro{pointer-events:none;opacity:.55}
 .dt{border-top:1px solid var(--ln);margin-top:12px;padding-top:2px}
 </style>
 </head>
@@ -160,7 +162,7 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var VER="v17";
+var VER="v20";
 var S,V={po:0,pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
@@ -175,12 +177,12 @@ function wk(o){var d=new Date();d.setDate(d.getDate()+7*o);d=new Date(Date.UTC(d
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function cnt(pid){return((S.sets[wk(V.o)]||{})[pid])||0}
 function wkLabel(){return V.o==0?"Tento týden":V.o==-1?"Minulý týden":V.o==1?"Příští týden":"Týden "+wk(V.o)}
-function lnk(t){return esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">odkaz</a>')}
+function lnk(t){var u=String(t||"").match(/https?:\/\/[^\s]+/g)||[];return u.map(function(x,i){return'<a class="lk" href="'+esc(x)+'" target="_blank" rel="noopener">▶ Ukázka'+(u.length>1?' '+(i+1):'')+'</a>'}).join("")}
 function imgs(x,e,from){from=from||0;return'<div class="imgs">'+x.imgs.map(function(s,i){if(i<from)return'';return'<div><img src="'+s+'" data-a="zoom" data-s="'+i+'" data-x="'+x.id+'" alt="">'+(e?'<i data-a="rmimg" data-x="'+x.id+'" data-i="'+i+'">×</i>':'')+'</div>'}).join("")+'</div>'}
 function exHtml(x,i,n){
  var P=curP().ex,cu=i>0&&!!P[i-1].top==!!x.top,cd=i<n-1&&!!P[i+1].top==!!x.top,star=x.top&&!V.r?'<span class="st">★</span>':'';var zm=V.x==x.id&&!V.r&&V.ed!=x.id;
 function slot(k){var u=x.imgs[k];return u?'<img class="th" src="'+u+'"'+(zm?' data-a="zoom" data-x="'+x.id+'" data-s="'+k+'"':'')+' alt="">':'<div class="th ph">'+(k==0?'📷':'')+'</div>'}
-var dn=isDone(x.id),ck=V.r?'':'<button class="ck'+(dn?' on':'')+'" data-a="ck" data-x="'+x.id+'">'+(dn?'✓':'')+'</button>';
+var dn=isDone(x.id),ro=V.o<0&&V.ed!=x.id,ck=V.r?'':'<button class="ck'+(dn?' on':'')+(ro?' ro':'')+'"'+(ro?'':' data-a="ck" data-x="'+x.id+'"')+'>'+(dn?'✓':'')+'</button>';
 star=x.top?'<span class="st">★</span>':'<span></span>';
 var mv=V.r?'<div class="mv"><button data-a="top" data-x="'+x.id+'"'+(cu?'':' disabled')+'>⤒</button><button data-a="up" data-x="'+x.id+'"'+(cu?'':' disabled')+'>▲</button><button data-a="down" data-x="'+x.id+'"'+(cd?'':' disabled')+'>▼</button></div>':'';
 var op=V.x==x.id&&!V.r,left=op?'<div class="oname">'+esc(x.name)+'</div>':(x.imgs.length?slot(0)+slot(1):'<div class="th nmx">'+esc(x.name)+'</div>');
@@ -188,7 +190,7 @@ var rc=V.r?mv:'<div class="rc'+(op?' o':'')+'">'+star+'<div class="rb"><div clas
 var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog" data-x="'+x.id+'"')+'>'+left+rc+'</div>';
  if(V.x==x.id&&!V.r){
   if(V.ed==x.id){
-   h+='<div class="dt"><div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="row"><button data-a="tg" data-x="'+x.id+'" class="'+(x.top?'p':'')+'">'+(x.top?'★ Top cvik':'☆ Označit jako top cvik')+'</button></div><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první dva se ukazují v seznamu)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
+   h+='<div class="dt">'+(V.o<0?'<div class="mu" style="margin-top:8px">Minulý týden: zaškrtávátko nahoře jde měnit jen v úpravách.</div>':'')+'<div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="row"><button data-a="tg" data-x="'+x.id+'" class="'+(x.top?'p':'')+'">'+(x.top?'★ Top cvik':'☆ Označit jako top cvik')+'</button></div><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první dva se ukazují v seznamu)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
   }else{
    h+='<div class="dt">'+(x.imgs.length?'<div class="big">'+x.imgs.map(function(u,i){return'<img src="'+u+'" data-a="zoom" data-x="'+x.id+'" data-s="'+i+'" alt="">'}).join("")+'</div>':'')+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+''+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
   }
@@ -228,7 +230,7 @@ function render(){
  var h="",p=curP();
  if(!p){V.p=null;
   var tot=S.parts.reduce(function(a,q){return a+cnt(q.id)},0);
-  h='<h1>No pain, no gain! 💪</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
+  h='<h1 style="text-align:center">No pain, no gain! 💪</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
   '<div class="pg"><div class="card part"'+(V.hr?'':' data-a="pg" data-x="warm"')+'><div class="n">🔥 Zahřátí</div><div class="c"><span>poznámky</span></div></div><div class="card part"'+(V.hr?'':' data-a="pg" data-x="plan"')+'><div class="n">📅 Týdenní plán</div><div class="c"><span>rozvrh</span></div></div></div><div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n pn2">'+pic(q)+'<span>'+esc(q.name)+'</span></div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
   '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div><div class="mu" style="text-align:center;margin-top:20px">Verze '+VER+'</div>';
  }else{
@@ -258,7 +260,7 @@ document.addEventListener("click",function(ev){
  else if(a=="up"||a=="down"||a=="top"){var i=p.ex.findIndex(function(x){return x.id==id}),x=p.ex.splice(i,1)[0],gs=x.top?0:p.ex.filter(function(y){return y.top}).length;p.ex.splice(a=="top"?gs:a=="up"?i-1:i+1,0,x)}
  else if(a=="tg"){var x=fx(id);x.top=!x.top;p.ex=ordered(p)}
  else if(a=="nw"){var x=fx(id),v=prompt("Nová nejtěžší váha:",x.cur);if(!v)return;if(x.cur)x.w=(x.w?x.w+"\n":"")+x.cur+" (do "+new Date().toLocaleDateString("cs-CZ")+")";x.cur=v}
- else if(a=="ck"){var k=wk(V.o);S.done[k]=S.done[k]||{};if(S.done[k][id])delete S.done[k][id];else S.done[k][id]=1}
+ else if(a=="ck"){if(V.o<0&&V.ed!=id)return;var k=wk(V.o);S.done[k]=S.done[k]||{};if(S.done[k][id])delete S.done[k][id];else S.done[k][id]=1}
  else if(a=="pg"){V.pg=id;V.pe=false;V.po=0;scrollTo(0,0)}
  else if(a=="pt"){var arr=planFor(wk(V.po))[+t.dataset.d],pi=arr.indexOf(t.dataset.p);if(pi>-1)arr.splice(pi,1);else arr.push(t.dataset.p)}
  else if(a=="pmu"||a=="pmd"){var ar=planFor(wk(V.po))[+t.dataset.d],j=+t.dataset.j,k2=a=="pmu"?j-1:j+1,tmp=ar[j];ar[j]=ar[k2];ar[k2]=tmp}
