@@ -78,8 +78,11 @@ a{color:var(--ac)}
 .po{display:flex;align-items:center;gap:8px;margin-bottom:6px}.po .pn{width:22px;font-weight:700;color:var(--ac)}.po .pm{flex:1;font-weight:600}.po button{padding:7px 0;width:42px}
 .pn2{display:flex;align-items:center;gap:10px}
 .pi{width:46px;height:46px;border-radius:10px;object-fit:cover;flex:none;background:var(--bg)}.pi.ph{display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.45}
-.lk{display:inline-block;padding:14px 22px;margin:4px 8px 4px 0;border-radius:12px;background:var(--ac);color:var(--ac2);font-weight:700;font-size:17px;text-decoration:none}
+.lk{display:inline-block;padding:9px 14px;border-radius:10px;border:1px solid var(--ac);color:var(--ac);background:transparent;font-weight:600;text-decoration:none}
 .ck.ro{pointer-events:none;opacity:.55}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:7;background:var(--bg);margin:0 -12px 10px;padding:8px 12px;height:60px}
+.top h2{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top h2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sets{top:calc(env(safe-area-inset-top,0px) + 60px)}
 .dt{border-top:1px solid var(--ln);margin-top:12px;padding-top:2px}
 </style>
 </head>
@@ -162,14 +165,16 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var VER="v20";
+var VER="v23";
 var S,V={po:0,pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
 function isDone(id){return((S.done[wk(V.o)]||{})[id])}
 function doneN(p){return p.ex.filter(function(x){return isDone(x.id)}).length}
+function bkDue(){var ref=Math.max(S.lastBackup||0,S.since||0);return Date.now()-ref>=14*864e5&&Date.now()>(S.snooze||0)}
+function bkBanner(){if(!bkDue())return"";return'<div class="card" style="border-color:var(--ac)"><b>💾 Čas na zálohu</b><div class="mu" style="margin-top:4px">'+(S.lastBackup?'Naposledy zálohováno '+new Date(S.lastBackup).toLocaleDateString("cs-CZ")+'.':'Zatím jsi nezálohoval.')+' Data jsou uložená jen v telefonu.</div><div class="row"><button class="p" data-a="exp">⬇ Zálohovat teď</button><button data-a="snz">Později</button></div></div>'}
 function ordered(p){return p.ex.filter(function(x){return x.top}).concat(p.ex.filter(function(x){return !x.top}))}
-function mig(){S.done=S.done||{};S.warm=S.warm||"";S.plans=S.plans||{};if(!Array.isArray(S.plan))S.plan=["","","","","","",""];S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
+function mig(){S.done=S.done||{};S.since=S.since||Date.now();S.warm=S.warm||"";S.plans=S.plans||{};if(!Array.isArray(S.plan))S.plan=["","","","","","",""];S.parts.forEach(function(p){p.ex=ordered(p)});S.parts.forEach(function(p){p.ex.forEach(function(x){if(x.cur===undefined){var m=(x.w||"").match(/\d+(?:,\d+)?/g)||[],mx=m.reduce(function(a,b){return Math.max(a,parseFloat(b.replace(",",".")))},0);x.cur=mx?String(mx).replace(".",",")+" kg":""}})})}
 function idb(){return new Promise(function(r,j){var q=indexedDB.open("fp",1);q.onupgradeneeded=function(){q.result.createObjectStore("s")};q.onsuccess=function(){r(q.result)};q.onerror=j})}
 async function load(){try{var d=await idb();return await new Promise(function(r){var q=d.transaction("s").objectStore("s").get("d");q.onsuccess=function(){r(q.result)};q.onerror=function(){r()}})}catch(e){try{return JSON.parse(localStorage.getItem("fp"))}catch(x){}}}
 async function save(){try{var d=await idb();d.transaction("s","readwrite").objectStore("s").put(S,"d")}catch(e){try{localStorage.setItem("fp",JSON.stringify(S))}catch(x){}}}
@@ -192,7 +197,7 @@ var h='<div class="card'+(dn?' dn':'')+'"><div class="rw"'+(V.r?'':' data-a="tog
   if(V.ed==x.id){
    h+='<div class="dt">'+(V.o<0?'<div class="mu" style="margin-top:8px">Minulý týden: zaškrtávátko nahoře jde měnit jen v úpravách.</div>':'')+'<div class="lb">Název</div><input data-f="name" data-x="'+x.id+'" value="'+esc(x.name)+'"><div class="row"><button data-a="tg" data-x="'+x.id+'" class="'+(x.top?'p':'')+'">'+(x.top?'★ Top cvik':'☆ Označit jako top cvik')+'</button></div><div class="lb">Aktuální (nejtěžší) váha</div><input data-f="cur" data-x="'+x.id+'" value="'+esc(x.cur)+'"><div class="lb">Poznámky</div><textarea data-f="n" data-x="'+x.id+'">'+esc(x.n)+'</textarea><div class="lb">Starší váhy</div><textarea data-f="w" data-x="'+x.id+'">'+esc(x.w)+'</textarea><div class="lb">Odkazy na videa (jeden na řádek)</div><textarea data-f="links" data-x="'+x.id+'">'+esc(x.links)+'</textarea><div class="lb">Obrázky (první dva se ukazují v seznamu)</div>'+imgs(x,true)+'<div class="row"><button data-a="addimg" data-x="'+x.id+'">+ Obrázek</button><button class="d" data-a="delex" data-x="'+x.id+'">Smazat cvik</button><button class="p" data-a="done">Hotovo</button></div></div>';
   }else{
-   h+='<div class="dt">'+(x.imgs.length?'<div class="big">'+x.imgs.map(function(u,i){return'<img src="'+u+'" data-a="zoom" data-x="'+x.id+'" data-s="'+i+'" alt="">'}).join("")+'</div>':'')+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+(x.links?'<div class="lb">Videa</div><div class="tx">'+lnk(x.links)+'</div>':'')+''+'<div class="row"><button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
+   h+='<div class="dt">'+(x.imgs.length?'<div class="big">'+x.imgs.map(function(u,i){return'<img src="'+u+'" data-a="zoom" data-x="'+x.id+'" data-s="'+i+'" alt="">'}).join("")+'</div>':'')+(x.n?'<div class="lb">Poznámky</div><div class="tx">'+esc(x.n)+'</div>':'')+(x.w?'<div class="lb">Starší váhy</div><div class="tx">'+esc(x.w)+'</div>':'')+''+''+'<div class="row">'+lnk(x.links)+'<button class="p" data-a="nw" data-x="'+x.id+'">⬆ Nová váha</button><button data-a="ed" data-x="'+x.id+'">✎ Upravit</button></div></div>';
   }
  }
  return h+'</div>'}
@@ -230,9 +235,9 @@ function render(){
  var h="",p=curP();
  if(!p){V.p=null;
   var tot=S.parts.reduce(function(a,q){return a+cnt(q.id)},0);
-  h='<h1 style="text-align:center">No pain, no gain! 💪</h1><div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
+  h='<h1 style="text-align:center">No pain, no gain! 💪</h1>'+bkBanner()+'<div class="wk"><button data-a="wp">‹</button><span><b>'+wkLabel()+'</b> · '+tot+' sérií</span><button data-a="wn">›</button></div>'+
   '<div class="pg"><div class="card part"'+(V.hr?'':' data-a="pg" data-x="warm"')+'><div class="n">🔥 Zahřátí</div><div class="c"><span>poznámky</span></div></div><div class="card part"'+(V.hr?'':' data-a="pg" data-x="plan"')+'><div class="n">📅 Týdenní plán</div><div class="c"><span>rozvrh</span></div></div></div><div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n pn2">'+pic(q)+'<span>'+esc(q.name)+'</span></div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
-  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div><div class="mu" style="text-align:center;margin-top:20px">Verze '+VER+'</div>';
+  '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div><div class="mu" style="text-align:center;margin-top:20px">Verze '+VER+'<br>Poslední záloha: '+(S.lastBackup?new Date(S.lastBackup).toLocaleDateString("cs-CZ"):'zatím žádná')+'</div>';
  }else{
   h='<div class="top"><button class="bk" data-a="back">← Partie</button><h2 class="pn2">'+(p.icon?'<img class="pi" src="'+p.icon+'" alt="">':'')+'<span>'+esc(p.name)+'</span></h2></div>';
   if(V.r)h+='<div class="card" style="display:flex;align-items:center;justify-content:space-between"><b>Řazení cviků</b><button class="p" data-a="rord">Hotovo</button></div>';
@@ -272,6 +277,7 @@ document.addEventListener("click",function(ev){
  else if(a=="openp"){V.pg=null;V.pe=false;V.p=t.dataset.p;V.x=V.ed=null;V.r=V.s=false;scrollTo(0,0)}
  else if(a=="back2"){V.pg=null;V.pe=false}
  else if(a=="pedit")V.pe=true;else if(a=="pdone")V.pe=false;
+ else if(a=="snz")S.snooze=Date.now()+864e5
  else if(a=="hrd")V.hr=!V.hr
  else if(a=="pmv"){var i=S.parts.findIndex(function(q){return q.id==id}),j=i+ +t.dataset.d;if(j<0||j>=S.parts.length)return;var q=S.parts.splice(i,1)[0];S.parts.splice(j,0,q)}
  else if(a=="wk0")V.o=0;else if(a=="wk1")V.o=-1;else if(a=="wk3")V.o=1;else if(a=="wk2")V.o=V.o<-1?V.o-1:-2;
@@ -284,10 +290,10 @@ document.addEventListener("click",function(ev){
  else if(a=="addimg"){V.img=id;document.getElementById("fi").click();return}
  else if(a=="rmimg"){fx(id).imgs.splice(+t.dataset.i,1)}
  else if(a=="zoom"){var o=document.getElementById("ov");o.firstChild.src=fx(id).imgs[+t.dataset.s];o.style.display="flex";return}
- else if(a=="exp"){var bl=new Blob([JSON.stringify(S)],{type:"application/json"}),an=document.createElement("a");an.href=URL.createObjectURL(bl);an.download="fitness-zaloha-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(an);an.click();setTimeout(function(){URL.revokeObjectURL(an.href);an.remove()},1500);return}
+ else if(a=="exp"){S.lastBackup=Date.now();var bl=new Blob([JSON.stringify(S)],{type:"application/json"}),an=document.createElement("a");an.href=URL.createObjectURL(bl);an.download="fitness-zaloha-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(an);an.click();setTimeout(function(){URL.revokeObjectURL(an.href);an.remove()},1500);save();render();return}
  else if(a=="imp"){document.getElementById("fj").click();return}
  save();render()});
-document.getElementById("fj").onchange=function(){var inp=this,f=inp.files[0];if(!f)return;f.text().then(function(t){try{var d=JSON.parse(t);if(!d.parts||!Array.isArray(d.parts))throw 0;if(!confirm("Načíst zálohu ("+d.parts.length+" partií)? Současná data se přepíšou."))return;S=d;mig();save();V.p=null;V.x=V.ed=null;render()}catch(e){alert("Soubor není platná záloha.")}inp.value=""})};
+document.getElementById("fj").onchange=function(){var inp=this,f=inp.files[0];if(!f)return;f.text().then(function(t){try{var d=JSON.parse(t);if(!d.parts||!Array.isArray(d.parts))throw 0;if(!confirm("Načíst zálohu ("+d.parts.length+" partií)? Současná data se přepíšou."))return;S=d;mig();S.lastBackup=Date.now();S.snooze=0;save();V.p=null;V.x=V.ed=null;render()}catch(e){alert("Soubor není platná záloha.")}inp.value=""})};
 document.getElementById("fp").onchange=async function(){var p=curP(),f=this.files[0];if(!p||!f)return;p.icon=await shrink(f,240);this.value="";save();render()};
 document.getElementById("ov").onclick=function(){this.style.display="none"};
 document.addEventListener("change",function(ev){var t=ev.target,f=t.dataset.f;if(!f)return;
