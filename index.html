@@ -83,6 +83,10 @@ a{color:var(--ac)}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:7;background:var(--bg);margin:0 -12px 10px;padding:8px 12px;height:60px}
 .top h2{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top h2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sets{top:calc(env(safe-area-inset-top,0px) + 60px)}
+.stk{position:sticky;top:env(safe-area-inset-top,0px);z-index:7;background:var(--bg);margin:0 -12px 10px;padding:6px 12px 4px}
+.stk .top{position:static;height:auto;margin:0 0 6px;padding:0}
+.stk .seg{margin-bottom:6px}.stk .seg button{padding:8px 2px;font-size:14px}
+.stk .sets{position:static;margin:0;padding:6px 12px}.stk .sets button{width:42px;height:42px}.stk .sets .v{font-size:24px}
 .dt{border-top:1px solid var(--ln);margin-top:12px;padding-top:2px}
 </style>
 </head>
@@ -165,7 +169,7 @@ var SEED=[
 ["Spiderman plank","",""]
 ]]
 ];
-var VER="v23";
+var VER="v24";
 var S,V={po:0,pg:null,pe:false,hr:false,p:null,o:0,x:null,ed:null,r:false,s:false,img:null};
 var uid=function(){return Math.random().toString(36).slice(2,9)};
 function seed(){return{parts:SEED.map(function(p){return{id:uid(),name:p[0],ex:p[1].map(function(x){return{id:uid(),name:x[0],w:x[1],n:x[2],links:"",imgs:[]}})}}),sets:{}}}
@@ -239,10 +243,10 @@ function render(){
   '<div class="pg"><div class="card part"'+(V.hr?'':' data-a="pg" data-x="warm"')+'><div class="n">🔥 Zahřátí</div><div class="c"><span>poznámky</span></div></div><div class="card part"'+(V.hr?'':' data-a="pg" data-x="plan"')+'><div class="n">📅 Týdenní plán</div><div class="c"><span>rozvrh</span></div></div></div><div class="pg">'+S.parts.map(function(q,i){var c=cnt(q.id);return'<div class="card part"'+(V.hr?'':' data-a="open" data-p="'+q.id+'"')+'><div class="n pn2">'+pic(q)+'<span>'+esc(q.name)+'</span></div><div class="c"><span>'+q.ex.length+' cviků</span><span class="badge'+(c?' on':'')+'">'+c+'</span></div>'+(V.hr?'<div class="mh"><button data-a="pmv" data-d="-1" data-x="'+q.id+'"'+(i==0?' disabled':'')+'>◀</button><button data-a="pmv" data-d="1" data-x="'+q.id+'"'+(i==S.parts.length-1?' disabled':'')+'>▶</button></div>':'')+'</div>'}).join("")+'</div>'+
   '<div class="row"><button data-a="addpart">+ Nová partie</button><button data-a="hrd" class="'+(V.hr?'p':'')+'">'+(V.hr?'Hotovo':'↕ Řadit')+'</button></div><div class="row"><button data-a="exp">⬇ Export zálohy</button><button data-a="imp">⬆ Import zálohy</button></div><div class="mu" style="text-align:center;margin-top:20px">Verze '+VER+'<br>Poslední záloha: '+(S.lastBackup?new Date(S.lastBackup).toLocaleDateString("cs-CZ"):'zatím žádná')+'</div>';
  }else{
-  h='<div class="top"><button class="bk" data-a="back">← Partie</button><h2 class="pn2">'+(p.icon?'<img class="pi" src="'+p.icon+'" alt="">':'')+'<span>'+esc(p.name)+'</span></h2></div>';
-  if(V.r)h+='<div class="card" style="display:flex;align-items:center;justify-content:space-between"><b>Řazení cviků</b><button class="p" data-a="rord">Hotovo</button></div>';
+  h='<div class="stk"><div class="top"><button class="bk" data-a="back">← Partie</button><h2 class="pn2">'+(p.icon?'<img class="pi" src="'+p.icon+'" alt="">':'')+'<span>'+esc(p.name)+'</span></h2></div>';
   h+='<div class="seg"><button data-a="wk2" class="'+(V.o<-1?'on':'')+'">'+(V.o<-1?'−'+(-V.o)+' týd.':'Starší')+'</button><button data-a="wk1" class="'+(V.o==-1?'on':'')+'">Minulý</button><button data-a="wk0" class="'+(V.o==0?'on':'')+'">Tento</button><button data-a="wk3" class="'+(V.o==1?'on':'')+'">Příští</button></div>'+
-  '<div class="sets"><div class="mu"><b style="color:var(--tx)">'+wkLabel()+'</b><br>série · hotovo '+doneN(p)+'/'+p.ex.length+'</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div>';
+  '<div class="sets"><div class="mu"><b style="color:var(--tx)">'+wkLabel()+'</b><br>série · hotovo '+doneN(p)+'/'+p.ex.length+'</div><button data-a="m">−</button><span class="v">'+cnt(p.id)+'</span><button class="p" data-a="pl">+</button></div></div>';
+  if(V.r)h+='<div class="card" style="display:flex;align-items:center;justify-content:space-between"><b>Řazení cviků</b><button class="p" data-a="rord">Hotovo</button></div>';
   h+=p.ex.map(function(x,i){return exHtml(x,i,p.ex.length)}).join("");
   h+='<button class="p" data-a="addex" style="width:100%">+ Přidat cvik</button><div class="row"><button data-a="rord" class="'+(V.r?'p':'')+'">'+(V.r?'Hotovo':'↕ Řadit cviky')+'</button><button data-a="pset">⚙ Partie</button></div>';
   if(V.s)h+='<div class="card" style="margin-top:10px"><div class="lb">Název partie</div><input data-f="pname" value="'+esc(p.name)+'"><div class="lb">Obrázek partie</div><div style="display:flex;align-items:center;gap:10px">'+pic(p)+'<button data-a="piadd">🖼 Vybrat obrázek</button>'+(p.icon?'<button data-a="pirm">Odebrat</button>':'')+'</div><div class="row"><button class="d" data-a="delpart">Smazat partii</button></div></div>';
